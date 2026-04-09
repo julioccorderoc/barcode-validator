@@ -1,6 +1,6 @@
 """Tests for CLI output formatting."""
 
-from barcode_validator.models import BarcodeResult, BarcodeType, ValidationResult
+from barcode_validator.models import BarcodeResult, BarcodeType, LookupResult, ValidationResult
 from barcode_validator.cli_format import format_human, format_json, format_error
 
 import json
@@ -195,6 +195,67 @@ class TestFormatError:
         output = format_error("test.pdf", err)
         assert "bad input" in output
         assert "test.pdf" in output
+
+
+def test_format_human_with_lookup():
+    lookup = LookupResult(
+        found=True,
+        product_name="Test Product",
+        brand="Test Brand",
+        category="Food",
+        source="open_food_facts",
+    )
+    bc = BarcodeResult(
+        value="0850031591271",
+        barcode_type=BarcodeType.EAN_13,
+        symbology="EAN13",
+        page=1,
+        valid_format=True,
+        valid_checkdigit=True,
+        matches_expected=None,
+        lookup=lookup,
+    )
+    result = ValidationResult(
+        file="test.pdf",
+        passed=True,
+        mode="decode",
+        barcodes=[bc],
+        expected_not_found=[],
+        summary="1 barcode(s) found. All validations passed.",
+    )
+    output = format_human(result)
+    assert "Test Product" in output
+    assert "Test Brand" in output
+
+
+def test_format_human_with_lookup_not_found():
+    lookup = LookupResult(
+        found=False,
+        product_name=None,
+        brand=None,
+        category=None,
+        source=None,
+    )
+    bc = BarcodeResult(
+        value="0000000000000",
+        barcode_type=BarcodeType.EAN_13,
+        symbology="EAN13",
+        page=1,
+        valid_format=True,
+        valid_checkdigit=True,
+        matches_expected=None,
+        lookup=lookup,
+    )
+    result = ValidationResult(
+        file="test.pdf",
+        passed=True,
+        mode="decode",
+        barcodes=[bc],
+        expected_not_found=[],
+        summary="1 barcode(s) found. All validations passed.",
+    )
+    output = format_human(result)
+    assert "not found" in output.lower()
 
 
 class TestFormatJsonArray:

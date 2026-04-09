@@ -24,6 +24,16 @@ def format_human(result: ValidationResult) -> str:
             lines.append(
                 f"  [{bc.page}] {bc.value}  {bc.barcode_type.value}  ({detail})"
             )
+            if bc.lookup is not None:
+                if bc.lookup.found:
+                    lookup_parts = []
+                    if bc.lookup.product_name:
+                        lookup_parts.append(bc.lookup.product_name)
+                    if bc.lookup.brand:
+                        lookup_parts.append(f"by {bc.lookup.brand}")
+                    lines.append(f"        Lookup: {' '.join(lookup_parts)}")
+                else:
+                    lines.append("        Lookup: not found in public databases")
     else:
         lines.append("Barcodes: (none)")
 
