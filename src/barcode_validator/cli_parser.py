@@ -33,10 +33,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="write JSON results to file (implies --json)",
     )
+    parser.add_argument(
+        "--no-lookup",
+        action="store_true",
+        default=False,
+        help="disable public barcode lookup (offline mode)",
+    )
     return parser
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse CLI arguments. Returns namespace with: files, expected, json, output."""
+    """Parse CLI arguments. Returns namespace with: files, expected, json, output, no_lookup."""
     parser = build_parser()
     return parser.parse_args(argv)

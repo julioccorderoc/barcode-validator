@@ -12,8 +12,18 @@ from barcode_validator.models import ValidationResult
 
 # --- Helpers ---
 
-def _make_ns(files: list[str], expected: list[str] | None = None, json: bool = False, output: str | None = None) -> argparse.Namespace:
-    return argparse.Namespace(files=files, expected=expected, json=json, output=output)
+@pytest.fixture(autouse=True)
+def disable_lookup_in_tests(monkeypatch):
+    """Prevent real network calls in CLI tests."""
+    from barcode_validator.lookup import LookupService
+    monkeypatch.setattr(
+        "barcode_validator.cli.create_lookup_service",
+        lambda: LookupService([]),
+    )
+
+
+def _make_ns(files: list[str], expected: list[str] | None = None, json: bool = False, output: str | None = None, no_lookup: bool = False) -> argparse.Namespace:
+    return argparse.Namespace(files=files, expected=expected, json=json, output=output, no_lookup=no_lookup)
 
 
 def _make_result(file: str, passed: bool) -> ValidationResult:
@@ -40,7 +50,7 @@ def _patch_cli(monkeypatch, ns, results=None, exc_map=None):
     results = results or {}
     exc_map = exc_map or {}
 
-    def fake_validate(f, expected_barcodes=None):
+    def fake_validate(f, expected_barcodes=None, lookup_service=None):
         if f in exc_map:
             raise exc_map[f]
         return results[f]

@@ -6,6 +6,7 @@ from pathlib import Path
 from barcode_validator import validate_label
 from barcode_validator.cli_parser import parse_args
 from barcode_validator.cli_format import format_human, format_json, format_json_array, format_error
+from barcode_validator.lookup import create_lookup_service
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -20,10 +21,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Error: output directory does not exist: {output_path.parent}", file=sys.stderr)
             return 2
 
+    lookup_service = None if args.no_lookup else create_lookup_service()
+
     results = []
     for file_path in args.files:
         try:
-            result = validate_label(file_path, expected_barcodes=args.expected)
+            result = validate_label(file_path, expected_barcodes=args.expected, lookup_service=lookup_service)
             if args.output:
                 results.append(result)
             elif args.json:

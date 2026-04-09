@@ -122,3 +122,15 @@ class TestParseArgsOutput:
         args = parse_args(["label.pdf", "--output", "results.json", "--json"])
         assert args.output == "results.json"
         assert args.json is True
+
+
+class TestParseArgsNoLookup:
+    """Test the --no-lookup flag."""
+
+    def test_no_lookup_flag_default(self):
+        args = parse_args(["test.pdf"])
+        assert args.no_lookup is False
+
+    def test_no_lookup_flag_set(self):
+        args = parse_args(["test.pdf", "--no-lookup"])
+        assert args.no_lookup is True
