@@ -119,3 +119,88 @@ class TestValidateLabel:
             assert "type" in bc
             assert "value" in bc
             assert "symbology" in bc
+
+
+# ---------------------------------------------------------------------------
+# Ground-truth parametrized tests
+# ---------------------------------------------------------------------------
+import json
+import sys
+
+sys.path.insert(0, str(Path(__file__).parent))
+from conftest import GROUND_TRUTH  # noqa: E402
+
+from barcode_validator import ValidationResult
+
+_files_with_barcodes = [f for f, data in GROUND_TRUTH.items() if data["barcodes"]]
+_all_files = list(GROUND_TRUTH.keys())
+
+# Files where barcodes exist but the decoder currently fails to extract them.
+# Tracked in ERRORS.md — remove xfail as decoding is fixed.
+_decode_failures = {
+    "(proof)(BL6)(540837).pdf",
+    "EXCEL PRINTPACK-0480-01 proof.pdf",
+    "EXCEL PRINTPACK-0480-04 proof.pdf",
+    "(label_artwork)(PH900X)(PH)(FNSKU_V3)(Level_Off).ai",
+}
+
+
+def _maybe_xfail(file: str):
+    if file in _decode_failures:
+        return pytest.param(file, marks=pytest.mark.xfail(reason="decoder does not extract barcode from this file"))
+    return file
+
+
+class TestGroundTruth:
+    """Parametrized tests driven by GROUND_TRUTH in conftest."""
+
+    @pytest.mark.parametrize("file", [_maybe_xfail(f) for f in _files_with_barcodes])
+    def test_ground_truth_decode(self, file: str):
+        """Decode-only: every ground-truth barcode is found with correct type and symbology."""
+        result = validate_label(TEST_DOCS / file)
+        decoded_values = [b.value for b in result.barcodes]
+        for expected in GROUND_TRUTH[file]["barcodes"]:
+            assert expected["value"] in decoded_values, (
+                f"Expected {expected['value']} not found in {decoded_values}"
+            )
+            bc = next(b for b in result.barcodes if b.value == expected["value"])
+            assert bc.barcode_type == BarcodeType(expected["type"])
+            assert bc.symbology == expected["symbology"]
+
+    @pytest.mark.parametrize("file", [_maybe_xfail(f) for f in _files_with_barcodes])
+    def test_ground_truth_comparison(self, file: str):
+        """Comparison mode with all ground-truth values passes."""
+        expected_values = [b["value"] for b in GROUND_TRUTH[file]["barcodes"]]
+        result = validate_label(TEST_DOCS / file, expected_barcodes=expected_values)
+        assert result.passed is True
+        assert result.expected_not_found == []
+
+    @pytest.mark.parametrize("file", _all_files)
+    def test_all_files_run_without_error(self, file: str):
+        """Every known file runs through validate_label without exception."""
+        result = validate_label(TEST_DOCS / file)
+        assert isinstance(result, ValidationResult)
+
+    @pytest.mark.parametrize("file", _all_files)
+    def test_json_schema_all_files(self, file: str):
+        """to_json() output has all PRD-required fields."""
+        result = validate_label(TEST_DOCS / file)
+        data = json.loads(result.to_json())
+        for key in ("file", "passed", "mode", "barcodes", "expected_not_found", "summary"):
+            assert key in data, f"Missing top-level key: {key}"
+        for bc in data["barcodes"]:
+            for key in ("value", "type", "symbology", "page",
+                        "valid_format", "valid_checkdigit", "matches_expected"):
+                assert key in bc, f"Missing barcode key: {key}"
+
+
+class TestValidateLabelErrors:
+    """Error-path tests for validate_label."""
+
+    def test_validate_label_nonexistent(self):
+        with pytest.raises(FileNotFoundError):
+            validate_label("nonexistent.pdf")
+
+    def test_validate_label_unsupported_format(self, unsupported_file):
+        with pytest.raises(ValueError, match="Unsupported"):
+            validate_label(unsupported_file)

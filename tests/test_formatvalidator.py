@@ -87,3 +87,29 @@ class TestFormatUnknown:
 
     def test_format_unknown_empty(self):
         assert validate_format("", BarcodeType.UNKNOWN) is False
+
+
+class TestFormatEAN8Negative:
+    def test_format_ean8_too_long(self):
+        assert validate_format("123456789", BarcodeType.EAN_8) is False
+
+    def test_format_ean8_alpha(self):
+        assert validate_format("1234567A", BarcodeType.EAN_8) is False
+
+
+class TestFormatUPCENegative:
+    def test_format_upce_too_short(self):
+        assert validate_format("1234567", BarcodeType.UPC_E) is False
+
+
+class TestFormatCode39Negative:
+    def test_format_code39_special_chars(self):
+        assert validate_format("HELLO@WORLD", BarcodeType.CODE39) is False
+
+
+class TestFormatASINNegative:
+    def test_format_asin_too_short(self):
+        assert validate_format("B08N5WRW", BarcodeType.ASIN) is False
+
+    def test_format_asin_lowercase(self):
+        assert validate_format("b08n5wrwnw", BarcodeType.ASIN) is False

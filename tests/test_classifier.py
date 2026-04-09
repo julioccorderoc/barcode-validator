@@ -77,3 +77,20 @@ def test_classify_fnsku_before_code128():
     """FNSKU must match before Code128 (pattern takes priority over symbology)."""
     result = classify(_barcode("X004781QUF", "Code128"))
     assert result is BarcodeType.FNSKU
+
+
+def test_classify_isbn13_979_prefix():
+    result = classify(_barcode("9791234567890", "EAN13"))
+    assert result is BarcodeType.ISBN_13
+
+def test_classify_code39_symbology():
+    result = classify(_barcode("HELLO-123", "Code39"))
+    assert result is BarcodeType.CODE39
+
+def test_classify_empty_value():
+    result = classify(_barcode("", "Unknown"))
+    assert result is BarcodeType.UNKNOWN
+
+def test_classify_asin_lowercase_rejected():
+    result = classify(_barcode("b08N5WRWNW", "Code128"))
+    assert result is not BarcodeType.ASIN

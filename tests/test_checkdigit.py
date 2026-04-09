@@ -64,3 +64,19 @@ class TestValidateCheckdigit:
 
     def test_upce_dispatches_mod10(self):
         assert validate_checkdigit("01234565", BarcodeType.UPC_E) is True
+
+
+class TestMod10EdgeCases:
+    def test_mod10_upce_invalid(self):
+        assert _mod10_check("01234560") is False
+
+    def test_mod10_single_digit(self):
+        assert isinstance(_mod10_check("0"), bool)
+
+    def test_mod10_all_zeros_13(self):
+        assert _mod10_check("0000000000000") is True
+
+
+class TestValidateCheckdigitEdge:
+    def test_code39_returns_none(self):
+        assert validate_checkdigit("HELLO", BarcodeType.CODE39) is None

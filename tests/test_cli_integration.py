@@ -103,3 +103,54 @@ class TestEntryPoints:
         )
         assert result.returncode == 0
         assert "barcode-validator" in result.stdout or "usage" in result.stdout.lower()
+
+
+class TestBatchRealFiles:
+    """Batch mode with multiple real files."""
+
+    def test_batch_two_pdfs(self, capsys):
+        pdf1 = str(TEST_DOCS / "(proof)(BL6)(540841).pdf")
+        pdf2 = str(TEST_DOCS / "(proof)(BL6)(540837).pdf")
+        code = main([pdf1, pdf2])
+        assert code in (0, 1)
+
+    def test_batch_pdf_and_jpg(self, capsys):
+        pdf = str(TEST_DOCS / "(proof)(BL6)(540841).pdf")
+        jpg = str(TEST_DOCS / "(label_artwork)(PH900X)(PH)(FNSKU_V3)(Level_Off).jpg")
+        code = main([pdf, jpg])
+        assert code == 0
+
+    def test_batch_json_multiple_files(self, capsys):
+        pdf = str(TEST_DOCS / "(proof)(BL6)(540841).pdf")
+        jpg = str(TEST_DOCS / "(label_artwork)(PH900X)(PH)(FNSKU_V3)(Level_Off).jpg")
+        code = main([pdf, jpg, "--json"])
+        captured = capsys.readouterr()
+        assert "0850031591271" in captured.out
+        assert "X004781QUF" in captured.out
+
+    def test_batch_mixed_valid_and_error(self, capsys, unsupported_file):
+        pdf = str(TEST_DOCS / "(proof)(BL6)(540841).pdf")
+        code = main([str(unsupported_file), pdf, "--json"])
+        assert code == 2
+        captured = capsys.readouterr()
+        assert "0850031591271" in captured.out
+        assert "Error" in captured.err
+
+
+class TestAIFileCLI:
+    """AI file format through CLI."""
+
+    def test_ai_file_decode(self, capsys):
+        ai = str(TEST_DOCS / "(label_artwork)(PH900X)(PH)(FNSKU_V3)(Level_Off).ai")
+        code = main([ai])
+        assert code in (0, 1)
+
+    def test_ai_file_json(self, capsys):
+        ai = str(TEST_DOCS / "(label_artwork)(PH900X)(PH)(FNSKU_V3)(Level_Off).ai")
+        code = main([ai, "--json"])
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert "file" in data
+        assert "barcodes" in data
+        assert "passed" in data
+        assert "mode" in data

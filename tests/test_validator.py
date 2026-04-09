@@ -82,3 +82,43 @@ class TestValidateBarcodes:
     def test_validate_file_field(self):
         result = validate_barcodes([], "/path/to/file.pdf")
         assert result.file == "/path/to/file.pdf"
+
+
+class TestValidateBarcodesEdge:
+    def test_multiple_barcodes_mixed_types(self):
+        decoded = [
+            DecodedBarcode("X004781QUF", "Code128", 1),
+            DecodedBarcode("0850031591271", "EAN13", 1),
+        ]
+        result = validate_barcodes(decoded, "test.pdf")
+        assert result.passed is True
+        types = {b.barcode_type for b in result.barcodes}
+        assert BarcodeType.FNSKU in types
+        assert BarcodeType.EAN_13 in types
+
+    def test_multiple_barcodes_one_invalid(self):
+        decoded = [
+            DecodedBarcode("X004781QUF", "Code128", 1),
+            DecodedBarcode("0850031591270", "EAN13", 1),
+        ]
+        result = validate_barcodes(decoded, "test.pdf")
+        assert result.passed is False
+
+    def test_comparison_partial_match(self):
+        decoded = [DecodedBarcode("X004781QUF", "Code128", 1)]
+        result = validate_barcodes(
+            decoded, "test.pdf",
+            expected_barcodes=["X004781QUF", "NOTHERE"],
+        )
+        assert result.passed is False
+        assert "NOTHERE" in result.expected_not_found
+        bc = next(b for b in result.barcodes if b.value == "X004781QUF")
+        assert bc.matches_expected is True
+
+    def test_summary_contains_count(self):
+        decoded = [
+            DecodedBarcode("X004781QUF", "Code128", 1),
+            DecodedBarcode("0850031591271", "EAN13", 2),
+        ]
+        result = validate_barcodes(decoded, "test.pdf")
+        assert "2" in result.summary
