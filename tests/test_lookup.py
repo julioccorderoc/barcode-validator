@@ -3,7 +3,7 @@
 import json
 from unittest.mock import patch, MagicMock
 
-from barcode_validator.lookup import LookupProvider, LookupService, OpenFoodFactsProvider, UPCitemdbProvider
+from barcode_validator.lookup import LookupProvider, LookupService, OpenFoodFactsProvider, UPCitemdbProvider, create_lookup_service
 from barcode_validator.models import BarcodeType, LookupResult
 
 
@@ -183,3 +183,11 @@ class TestUPCitemdbProvider:
         provider = UPCitemdbProvider()
         result = provider.lookup("0850031591271")
         assert result is None
+
+
+def test_create_lookup_service_returns_service_with_default_providers():
+    service = create_lookup_service()
+    assert isinstance(service, LookupService)
+    assert len(service._providers) == 2
+    assert service._providers[0].name == "open_food_facts"
+    assert service._providers[1].name == "upcitemdb"

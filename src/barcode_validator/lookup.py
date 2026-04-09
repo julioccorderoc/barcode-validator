@@ -122,3 +122,11 @@ class UPCitemdbProvider(LookupProvider):
             category=item.get("category") or None,
             source=self.name,
         )
+
+
+def create_lookup_service() -> LookupService:
+    """Create a LookupService with the default built-in providers."""
+    return LookupService([
+        OpenFoodFactsProvider(),
+        UPCitemdbProvider(),
+    ])
