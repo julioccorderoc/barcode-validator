@@ -5,67 +5,90 @@
 [![License](https://img.shields.io/github/license/julioccorderoc/barcode-validator)](https://github.com/julioccorderoc/barcode-validator/blob/main/LICENSE)
 [![Skills.sh](https://img.shields.io/badge/skills.sh-compatible-brightgreen)](https://skills.sh)
 
-Validate barcodes on label proofs. Decode, classify, check digits, compare expected values. Fully offline.
+**An AI agent skill that validates barcodes on label proofs.** Give it a PDF, AI, PSD, or image file — it decodes every barcode, classifies them (FNSKU, UPC-A, EAN-13, etc.), validates format and check digits, looks up product info, and returns structured JSON with a pass/fail verdict.
 
-## What it does
+Built for AI agents. Works as a CLI too.
 
-Reads PDF, AI, PSD, and image files containing label proofs. Extracts barcodes using zxing-cpp, classifies them (FNSKU, UPC-A, EAN-13, etc.), validates format and check digits, and optionally compares against expected values. Returns structured JSON with a pass/fail verdict.
+## Use as an AI Agent Skill
 
-Built for NCL ops -- replaces manual barcode scanning with one command.
+barcode-validator ships a [SKILL.md](SKILL.md) for AI agent discovery via [skills.sh](https://skills.sh).
 
-## Installation
+### Install the skill
+
+```bash
+npx skills add julioccorderoc/barcode-validator
+```
+
+### Agent invocation
+
+The `scripts/validate.sh` wrapper adds `--json` automatically:
+
+```bash
+./scripts/validate.sh label-proof.pdf
+./scripts/validate.sh label-proof.pdf --expected X001ABC1234
+```
+
+Agents get structured JSON on stdout — parse the output, check exit codes, done. See [SKILL.md](SKILL.md) for the full agent contract: triggers, examples, output schema, and error handling.
+
+## Use as a CLI Utility
+
+### Install from source
 
 Requires Python 3.13+ and [uv](https://docs.astral.sh/uv/).
 
-### From source
-
 ```bash
-git clone <repo-url>
+git clone https://github.com/julioccorderoc/barcode-validator.git
 cd barcode-validator
 uv sync
 ```
 
-### As a dependency
+### Install as a dependency
 
 ```bash
 uv add barcode-validator
 ```
 
-## Usage
+### Commands
 
-### Decode-only
+**Decode-only** — extract and validate all barcodes:
 
 ```bash
 barcode-validator label-proof.pdf --json
 ```
 
-### Comparison mode
+**Comparison mode** — check against expected values:
 
 ```bash
 barcode-validator label-proof.pdf --expected X001ABC1234 --expected 0850031591271 --json
 ```
 
-### Save results to file
+**Save results to file** (`--output` implies `--json`):
 
 ```bash
 barcode-validator label-proof.pdf --output results.json
 ```
 
-`--output` implies `--json`. Writes a JSON array of all results to the specified path.
-
-### Multiple files
-
-```bash
-barcode-validator proof1.pdf proof2.pdf --json
-```
-
-### Human-readable output
+**Human-readable output** — omit `--json` for a summary on stderr:
 
 ```bash
 barcode-validator label-proof.pdf
 ```
 
-Omit `--json` for a human-readable summary on stderr.
+**Multiple files:**
+
+```bash
+barcode-validator proof1.pdf proof2.pdf --json
+```
+
+**Offline mode** — disable product lookup:
+
+```bash
+barcode-validator label-proof.pdf --json --no-lookup
+```
+
+## Product Lookup
+
+By default, barcode-validator queries free public APIs (Open Food Facts, UPCitemdb) to enrich results with product names and descriptions. Lookup is informational only — it never affects the pass/fail verdict. Use `--no-lookup` to disable all network calls.
 
 ## Output Schema
 
@@ -82,7 +105,8 @@ Omit `--json` for a human-readable summary on stderr.
       "page": 1,
       "valid_format": true,
       "valid_checkdigit": null,
-      "matches_expected": null
+      "matches_expected": null,
+      "lookup": null
     }
   ],
   "expected_not_found": [],
@@ -98,8 +122,7 @@ Omit `--json` for a human-readable summary on stderr.
 | `barcodes[].valid_format` | boolean | Format matches expected pattern |
 | `barcodes[].valid_checkdigit` | boolean/null | Check digit valid (null if type has none) |
 | `barcodes[].matches_expected` | boolean/null | Matches expected value (null in decode mode) |
-
-See [SKILL.md](SKILL.md) for the full schema and AI agent integration details.
+| `barcodes[].lookup` | object/null | Product lookup result (null when `--no-lookup`) |
 
 ## Supported File Formats
 
@@ -129,38 +152,24 @@ EPS is **not** supported.
 | 1 | Validation failed (bad check digit, missing expected, format) |
 | 2 | Error (unsupported file, file not found, processing failure) |
 
-## AI Agent Integration
+## Python API
 
-This tool ships a [SKILL.md](SKILL.md) for AI agent discovery via [skills.sh](https://skills.sh).
+```python
+from barcode_validator import validate_label
 
-```bash
-npx skills add <owner>/barcode-validator
-```
-
-The `scripts/validate.sh` wrapper adds `--json` automatically for agent invocation:
-
-```bash
-./scripts/validate.sh label-proof.pdf --expected X001ABC1234
+result = validate_label("label-proof.pdf", expected=["X001ABC1234"])
+print(result.passed)       # True/False
+print(result.to_json())    # Full JSON output
 ```
 
 ## Development
 
-### Prerequisites
-
-- Python 3.13+
-- [uv](https://docs.astral.sh/uv/)
-
-### Setup
+Requires Python 3.13+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/julioccorderoc/barcode-validator.git
 cd barcode-validator
 uv sync
-```
-
-### Run tests
-
-```bash
 uv run pytest
 ```
 
@@ -170,7 +179,7 @@ uv run pytest
 barcode-validator/
 ├── src/barcode_validator/   # Source code
 ├── tests/                   # pytest test suite
-├── scripts/                 # Shell wrappers
+├── scripts/                 # Shell wrappers (agent invocation)
 ├── spec/                    # Architecture Decision Records
 ├── docs/                    # PRD, roadmap, research
 ├── SKILL.md                 # AI agent skill definition

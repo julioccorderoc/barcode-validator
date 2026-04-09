@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.13+, `urllib.request` (stdlib — no new dependencies), pytest with `unittest.mock` for HTTP mocking.
 
-**Spec:** `docs/superpowers/specs/2026-04-09-public-barcode-lookup-design.md`
+**Spec:** `spec/007-public-barcode-lookup.md`
 
 ---
 
