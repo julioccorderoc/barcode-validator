@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from barcode_validator import decode_file, DecodedBarcode
+from barcode_validator import decode_file, DecodedBarcode, validate_label, BarcodeType
 
 TEST_DOCS = Path(__file__).parent.parent / "test_docs"
 
@@ -66,3 +66,56 @@ class TestRasterImages:
         bc = next(b for b in result if b.value == "X004781QUF")
         assert bc.symbology == "Code128"
         assert bc.page == 1
+
+
+class TestValidateLabel:
+    """Integration tests for validate_label (EPIC 2)."""
+
+    def test_decode_only_pdf(self):
+        path = TEST_DOCS / "(proof)(BL6)(540841).pdf"
+        result = validate_label(path)
+        assert result.mode == "decode"
+        assert result.passed is True
+        bc = next(b for b in result.barcodes if b.value == "0850031591271")
+        assert bc.barcode_type == BarcodeType.EAN_13
+        assert bc.valid_format is True
+        assert bc.valid_checkdigit is True
+        assert bc.matches_expected is None
+
+    def test_comparison_match(self):
+        path = TEST_DOCS / "(proof)(BL6)(540841).pdf"
+        result = validate_label(path, expected_barcodes=["0850031591271"])
+        assert result.mode == "comparison"
+        assert result.passed is True
+        assert result.expected_not_found == []
+
+    def test_comparison_mismatch(self):
+        path = TEST_DOCS / "(proof)(BL6)(540841).pdf"
+        result = validate_label(path, expected_barcodes=["WRONG"])
+        assert result.passed is False
+        assert "WRONG" in result.expected_not_found
+
+    def test_jpg_fnsku(self):
+        path = TEST_DOCS / "(label_artwork)(PH900X)(PH)(FNSKU_V3)(Level_Off).jpg"
+        result = validate_label(path)
+        bc = next(b for b in result.barcodes if b.value == "X004781QUF")
+        assert bc.barcode_type == BarcodeType.FNSKU
+        assert bc.valid_format is True
+        assert bc.valid_checkdigit is None
+
+    def test_to_json_output(self):
+        import json
+
+        path = TEST_DOCS / "(proof)(BL6)(540841).pdf"
+        result = validate_label(path)
+        data = json.loads(result.to_json())
+        assert "file" in data
+        assert "passed" in data
+        assert "mode" in data
+        assert "barcodes" in data
+        assert "expected_not_found" in data
+        assert "summary" in data
+        for bc in data["barcodes"]:
+            assert "type" in bc
+            assert "value" in bc
+            assert "symbology" in bc
