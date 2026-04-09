@@ -23,4 +23,7 @@ def main(argv: list[str] | None = None) -> int:
         except (FileNotFoundError, ValueError) as exc:
             print(format_error(file_path, exc), file=sys.stderr)
             exit_code = max(exit_code, 2)
+        except Exception as exc:
+            print(format_error(file_path, exc), file=sys.stderr)
+            exit_code = max(exit_code, 2)
     return exit_code

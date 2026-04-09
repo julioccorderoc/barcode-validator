@@ -14,3 +14,5 @@ wheels/
 test_docs/
 MEMORY.md
 ERRORS.md
+.DS_Store
+.env

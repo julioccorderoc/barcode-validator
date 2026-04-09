@@ -53,8 +53,8 @@ class TestValidateBarcodes:
 
     def test_validate_empty_decoded_decode_only(self):
         result = validate_barcodes([], "test.pdf")
-        assert result.passed is True
-        assert "0" in result.summary
+        assert result.passed is False
+        assert "0 barcode(s) found" in result.summary
 
     def test_validate_empty_decoded_comparison(self):
         result = validate_barcodes([], "test.pdf", expected_barcodes=["A"])

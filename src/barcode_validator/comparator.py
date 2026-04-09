@@ -16,6 +16,7 @@ def match_expected(
     """
     expected_set = set(expected_values)
     decoded_set = set(decoded_values)
+    # Duplicate decoded values collapse to one dict key (intentional — labels repeat barcodes)
     matches = {v: v in expected_set for v in decoded_values}
     expected_not_found = [e for e in expected_values if e not in decoded_set]
     return matches, expected_not_found

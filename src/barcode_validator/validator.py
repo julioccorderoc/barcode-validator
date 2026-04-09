@@ -51,7 +51,7 @@ def validate_barcodes(
         )
 
     if mode == "decode":
-        passed = all(
+        passed = bool(results) and all(
             b.valid_format and b.valid_checkdigit is not False for b in results
         )
     else:

@@ -125,6 +125,13 @@ class TestExitCodes:
         })
         assert main() == 2
 
+    def test_unexpected_exception_returns_2(self, monkeypatch):
+        from barcode_validator.cli import main
+
+        ns = _make_ns(files=["corrupt.pdf"])
+        _patch_cli(monkeypatch, ns, exc_map={"corrupt.pdf": RuntimeError("segfault")})
+        assert main() == 2
+
 
 # --- Output routing tests ---
 

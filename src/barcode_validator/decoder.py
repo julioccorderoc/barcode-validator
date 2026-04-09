@@ -1,3 +1,5 @@
+import functools
+
 import zxingcpp
 from PIL import Image
 
@@ -6,6 +8,7 @@ from barcode_validator.models import DecodedBarcode
 from barcode_validator.preprocessing import preprocess
 
 
+@functools.lru_cache
 def _has_pyzbar() -> bool:
     """Check if pyzbar is available as optional fallback."""
     try:
@@ -20,7 +23,7 @@ def _zxing_decode(image: Image.Image) -> list[zxingcpp.Result]:
     return zxingcpp.read_barcodes(image)
 
 
-def _pyzbar_decode(image: Image.Image) -> list[DecodedBarcode]:
+def _pyzbar_decode(image: Image.Image, page: int) -> list[DecodedBarcode]:
     """Decode barcodes using pyzbar as fallback."""
     from pyzbar.pyzbar import decode as pyzbar_decode
 
@@ -29,7 +32,7 @@ def _pyzbar_decode(image: Image.Image) -> list[DecodedBarcode]:
         DecodedBarcode(
             value=r.data.decode("utf-8"),
             symbology=r.type,
-            page=0,  # caller patches page number
+            page=page,
         )
         for r in results
     ]
@@ -84,10 +87,6 @@ def _decode_single_page(page_img: PageImage) -> list[DecodedBarcode]:
 
     # Step 3: pyzbar fallback (if available)
     if _has_pyzbar():
-        barcodes = _pyzbar_decode(image)
-        return [
-            DecodedBarcode(value=bc.value, symbology=bc.symbology, page=page)
-            for bc in barcodes
-        ]
+        return _pyzbar_decode(image, page)
 
     return []

@@ -145,10 +145,8 @@ class TestValidateLabel:
 # Ground-truth parametrized tests
 # ---------------------------------------------------------------------------
 import json
-import sys
 
-sys.path.insert(0, str(Path(__file__).parent))
-from conftest import GROUND_TRUTH  # noqa: E402
+from ground_truth import GROUND_TRUTH
 
 from barcode_validator import ValidationResult
 
