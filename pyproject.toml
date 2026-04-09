@@ -8,7 +8,7 @@ packages = ["src/barcode_validator"]
 [project]
 name = "barcode-validator"
 version = "0.1.0"
-description = "Add your description here"
+description = "Automated barcode validation for label proofs"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -17,6 +17,9 @@ dependencies = [
     "pymupdf>=1.27.2.2",
     "zxing-cpp>=3.0.0",
 ]
+
+[project.optional-dependencies]
+pyzbar = ["pyzbar"]
 
 [dependency-groups]
 dev = [

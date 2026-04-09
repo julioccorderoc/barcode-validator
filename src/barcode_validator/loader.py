@@ -7,7 +7,6 @@ from PIL import Image
 PDF_EXTENSIONS = {".pdf", ".ai"}
 RASTER_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp"}
 PSD_EXTENSIONS = {".psd"}
-SUPPORTED_EXTENSIONS = PDF_EXTENSIONS | RASTER_EXTENSIONS | PSD_EXTENSIONS
 
 
 @dataclass
@@ -42,15 +41,14 @@ def load_images(file_path: Path) -> list[PageImage]:
 
 def _load_pdf(path: Path) -> list[PageImage]:
     """Render PDF/AI pages to images at 2x scale via PyMuPDF."""
-    doc = fitz.open(str(path))
-    pages = []
-    for page_num in range(len(doc)):
-        page = doc[page_num]
-        # 2x scale matrix for ~144-300 DPI rendering (ADR-002)
-        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        pages.append(PageImage(image=img, page=page_num + 1))
-    doc.close()
+    with fitz.open(str(path)) as doc:
+        pages = []
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            # 2x scale matrix for ~144-300 DPI rendering (ADR-002)
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            pages.append(PageImage(image=img, page=page_num + 1))
     return pages
 
 

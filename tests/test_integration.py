@@ -29,10 +29,10 @@ class TestPDFProofs:
         assert bc.symbology == "EAN13"
         assert bc.page == 1
 
-    def test_proof_540837_runs_without_error(self):
+    def test_proof_540837_no_barcodes_detected(self):
         path = TEST_DOCS / "(proof)(BL6)(540837).pdf"
         result = decode_file(path)
-        assert isinstance(result, list)
+        assert result == []
 
     def test_excel_printpack_0480_01_runs_without_error(self):
         path = TEST_DOCS / "EXCEL PRINTPACK-0480-01 proof.pdf"
