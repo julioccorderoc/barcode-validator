@@ -39,5 +39,5 @@ Full analysis: `docs/research/pdf-image-extraction-pipeline.md`
 ## Consequences
 
 - `PyMuPDF` = required dep
-- Render at 2x scale (~144-300 DPI) for barcode detection
+- Render at 3x scale (~216-450 DPI) for barcode detection
 - ~25 MB memory per A4 page at 300 DPI RGB — fine for label proofs

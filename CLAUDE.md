@@ -45,7 +45,7 @@ All in `spec/`. Locked.
 | ADR | Decision |
 | --- | -------- |
 | 001 | zxing-cpp primary, pyzbar fallback |
-| 002 | PyMuPDF PDF/AI render at 2x scale |
+| 002 | PyMuPDF PDF/AI render at 3x scale |
 | 003 | OpenCV: raw first, then grayscale + blur + threshold |
 | 004 | Priority-ordered pattern matching for classification |
 | 005 | argparse CLI, JSON stdout, human stderr |

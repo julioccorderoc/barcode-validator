@@ -29,29 +29,49 @@ class TestPDFProofs:
         assert bc.symbology == "EAN13"
         assert bc.page == 1
 
-    def test_proof_540837_no_barcodes_detected(self):
+    def test_proof_540837_decodes_ean13(self):
         path = TEST_DOCS / "(proof)(BL6)(540837).pdf"
         result = decode_file(path)
-        assert result == []
+        assert len(result) >= 1
+        values = [bc.value for bc in result]
+        assert "0850031591264" in values
+        bc = next(b for b in result if b.value == "0850031591264")
+        assert bc.symbology == "EAN13"
+        assert bc.page == 1
 
-    def test_excel_printpack_0480_01_runs_without_error(self):
+    def test_excel_printpack_0480_01_decodes_fnsku(self):
         path = TEST_DOCS / "EXCEL PRINTPACK-0480-01 proof.pdf"
         result = decode_file(path)
-        assert isinstance(result, list)
+        assert len(result) >= 1
+        values = [bc.value for bc in result]
+        assert "X0032C5SUL" in values
+        bc = next(b for b in result if b.value == "X0032C5SUL")
+        assert bc.symbology == "Code128"
+        assert bc.page == 1
 
-    def test_excel_printpack_0480_04_runs_without_error(self):
+    def test_excel_printpack_0480_04_decodes_fnsku(self):
         path = TEST_DOCS / "EXCEL PRINTPACK-0480-04 proof.pdf"
         result = decode_file(path)
-        assert isinstance(result, list)
+        assert len(result) >= 1
+        values = [bc.value for bc in result]
+        assert "X002K7DQFD" in values
+        bc = next(b for b in result if b.value == "X002K7DQFD")
+        assert bc.symbology == "Code128"
+        assert bc.page == 1
 
 
 class TestAIFiles:
     """Test decoding AI files (PDF-compatible)."""
 
-    def test_ai_file_runs_without_error(self):
+    def test_ai_file_decodes_fnsku(self):
         path = TEST_DOCS / "(label_artwork)(PH900X)(PH)(FNSKU_V3)(Level_Off).ai"
         result = decode_file(path)
-        assert isinstance(result, list)
+        assert len(result) >= 1
+        values = [bc.value for bc in result]
+        assert "X004781QUF" in values
+        bc = next(b for b in result if b.value == "X004781QUF")
+        assert bc.symbology == "Code128"
+        assert bc.page == 1
 
 
 class TestRasterImages:
@@ -135,26 +155,10 @@ from barcode_validator import ValidationResult
 _files_with_barcodes = [f for f, data in GROUND_TRUTH.items() if data["barcodes"]]
 _all_files = list(GROUND_TRUTH.keys())
 
-# Files where barcodes exist but the decoder currently fails to extract them.
-# Tracked in ERRORS.md — remove xfail as decoding is fixed.
-_decode_failures = {
-    "(proof)(BL6)(540837).pdf",
-    "EXCEL PRINTPACK-0480-01 proof.pdf",
-    "EXCEL PRINTPACK-0480-04 proof.pdf",
-    "(label_artwork)(PH900X)(PH)(FNSKU_V3)(Level_Off).ai",
-}
-
-
-def _maybe_xfail(file: str):
-    if file in _decode_failures:
-        return pytest.param(file, marks=pytest.mark.xfail(reason="decoder does not extract barcode from this file"))
-    return file
-
-
 class TestGroundTruth:
     """Parametrized tests driven by GROUND_TRUTH in conftest."""
 
-    @pytest.mark.parametrize("file", [_maybe_xfail(f) for f in _files_with_barcodes])
+    @pytest.mark.parametrize("file", _files_with_barcodes)
     def test_ground_truth_decode(self, file: str):
         """Decode-only: every ground-truth barcode is found with correct type and symbology."""
         result = validate_label(TEST_DOCS / file)
@@ -167,7 +171,7 @@ class TestGroundTruth:
             assert bc.barcode_type == BarcodeType(expected["type"])
             assert bc.symbology == expected["symbology"]
 
-    @pytest.mark.parametrize("file", [_maybe_xfail(f) for f in _files_with_barcodes])
+    @pytest.mark.parametrize("file", _files_with_barcodes)
     def test_ground_truth_comparison(self, file: str):
         """Comparison mode with all ground-truth values passes."""
         expected_values = [b["value"] for b in GROUND_TRUTH[file]["barcodes"]]

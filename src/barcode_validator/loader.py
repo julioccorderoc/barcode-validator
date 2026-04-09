@@ -20,7 +20,7 @@ def load_images(file_path: Path) -> list[PageImage]:
     """Load a file and return a list of PIL Images with page numbers.
 
     Routes by file extension per ADR-006:
-    - .pdf, .ai → PyMuPDF render at 2x scale
+    - .pdf, .ai → PyMuPDF render at 3x scale
     - .psd → Pillow flattened composite
     - .png, .jpg, .jpeg, .tiff, .tif, .bmp → Pillow open
     """
@@ -40,13 +40,13 @@ def load_images(file_path: Path) -> list[PageImage]:
 
 
 def _load_pdf(path: Path) -> list[PageImage]:
-    """Render PDF/AI pages to images at 2x scale via PyMuPDF."""
+    """Render PDF/AI pages to images at 3x scale via PyMuPDF."""
     with fitz.open(str(path)) as doc:
         pages = []
         for page_num in range(len(doc)):
             page = doc[page_num]
-            # 2x scale matrix for ~144-300 DPI rendering (ADR-002)
-            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+            # 3x scale matrix for ~216-450 DPI rendering (ADR-002)
+            pix = page.get_pixmap(matrix=fitz.Matrix(3, 3))
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             pages.append(PageImage(image=img, page=page_num + 1))
     return pages

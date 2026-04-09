@@ -17,7 +17,7 @@
 - Status: Complete
 - Dependencies: None
 - **Goal:** Accept label proofs (PDF, AI, PSD, PNG, JPG, TIFF, BMP), decode all barcodes, output raw values + symbology metadata. Foundation for everything else.
-- **Scope:** File format routing (ADR-006), PDF/AI render via PyMuPDF at 2x (ADR-002), PSD/raster via Pillow, zxing-cpp primary + pyzbar fallback (ADR-001), OpenCV preprocessing retry (ADR-003). Output = list of raw decoded barcode objects. No classification, validation, or CLI.
+- **Scope:** File format routing (ADR-006), PDF/AI render via PyMuPDF at 3x (ADR-002), PSD/raster via Pillow, zxing-cpp primary + pyzbar fallback (ADR-001), OpenCV preprocessing retry (ADR-003). Output = list of raw decoded barcode objects. No classification, validation, or CLI.
 - **Done when:**
   - PDF from `test_docs/` → all barcodes decoded with correct values + symbology
   - Raster image (PNG/JPG) barcode decoded correctly
@@ -58,11 +58,10 @@
 - **Goal:** Correctness + regression prevention. Real proofs in `test_docs/` as ground-truth.
 - **Scope:** pytest. Unit tests per layer: routing, rendering, decoding, classification, check digits, regex, comparison, JSON. Integration tests = full pipeline against real proofs. Offline only. Fixtures: `(proof)(BL6)(540837).pdf` and `(proof)(BL6)(540841).pdf`.
 - **Done when:**
-  - `pytest` all green *(208 passed, 8 xfailed)*
+  - `pytest` all green *(216 passed, 0 xfail)*
   - Unit coverage: check digits (correct/incorrect), classification per type, decode-only vs comparison, error paths
   - Integration: `validate_label()` against each `test_docs/` PDF → known barcodes decoded + classified + validated
   - No network required
-- **Note:** 4 test_docs files have barcodes the decoder fails to extract (marked xfail). Tracked in `ERRORS.md`.
 
 ### EPIC-005: AI Agent Skill Definition (`SKILL.md`)
 
