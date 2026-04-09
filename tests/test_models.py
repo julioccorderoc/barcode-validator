@@ -4,6 +4,7 @@ from barcode_validator.models import (
     BarcodeResult,
     BarcodeType,
     DecodedBarcode,
+    LookupResult,
     ValidationResult,
 )
 
@@ -193,3 +194,87 @@ def test_validation_result_null_matches_expected_in_json():
     j = vr.to_json()
     parsed = json.loads(j)
     assert parsed["barcodes"][0]["matches_expected"] is None
+
+
+# --- LookupResult ---
+
+
+def test_lookup_result_found():
+    result = LookupResult(
+        found=True,
+        product_name="Test Product",
+        brand="Test Brand",
+        category="Food",
+        source="test_provider",
+    )
+    assert result.found is True
+    assert result.product_name == "Test Product"
+    assert result.brand == "Test Brand"
+    assert result.category == "Food"
+    assert result.source == "test_provider"
+
+
+def test_lookup_result_not_found():
+    result = LookupResult(
+        found=False,
+        product_name=None,
+        brand=None,
+        category=None,
+        source=None,
+    )
+    assert result.found is False
+    assert result.product_name is None
+
+
+def test_validation_result_to_dict_with_lookup():
+    lookup = LookupResult(
+        found=True,
+        product_name="Test Product",
+        brand="Test Brand",
+        category="Food",
+        source="open_food_facts",
+    )
+    bc = BarcodeResult(
+        value="012345678901",
+        barcode_type=BarcodeType.UPC_A,
+        symbology="EAN-13",
+        page=1,
+        valid_format=True,
+        valid_checkdigit=True,
+        matches_expected=None,
+        lookup=lookup,
+    )
+    result = ValidationResult(
+        file="test.pdf",
+        passed=True,
+        mode="decode",
+        barcodes=[bc],
+        expected_not_found=[],
+        summary="1 barcode(s) found. All validations passed.",
+    )
+    d = result.to_dict()
+    assert d["barcodes"][0]["lookup"]["found"] is True
+    assert d["barcodes"][0]["lookup"]["product_name"] == "Test Product"
+    assert d["barcodes"][0]["lookup"]["source"] == "open_food_facts"
+
+
+def test_validation_result_to_dict_without_lookup():
+    bc = BarcodeResult(
+        value="012345678901",
+        barcode_type=BarcodeType.UPC_A,
+        symbology="EAN-13",
+        page=1,
+        valid_format=True,
+        valid_checkdigit=True,
+        matches_expected=None,
+    )
+    result = ValidationResult(
+        file="test.pdf",
+        passed=True,
+        mode="decode",
+        barcodes=[bc],
+        expected_not_found=[],
+        summary="1 barcode(s) found. All validations passed.",
+    )
+    d = result.to_dict()
+    assert d["barcodes"][0]["lookup"] is None

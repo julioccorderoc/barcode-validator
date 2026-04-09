@@ -26,6 +26,16 @@ class BarcodeType(Enum):
 
 
 @dataclass(frozen=True)
+class LookupResult:
+    """Product information from a public barcode database."""
+    found: bool
+    product_name: str | None
+    brand: str | None
+    category: str | None
+    source: str | None
+
+
+@dataclass(frozen=True)
 class BarcodeResult:
     """A classified and validated barcode."""
     value: str
@@ -35,6 +45,7 @@ class BarcodeResult:
     valid_format: bool
     valid_checkdigit: bool | None
     matches_expected: bool | None
+    lookup: LookupResult | None = None
 
 
 @dataclass
@@ -61,6 +72,13 @@ class ValidationResult:
                     "valid_format": b.valid_format,
                     "valid_checkdigit": b.valid_checkdigit,
                     "matches_expected": b.matches_expected,
+                    "lookup": {
+                        "found": b.lookup.found,
+                        "product_name": b.lookup.product_name,
+                        "brand": b.lookup.brand,
+                        "category": b.lookup.category,
+                        "source": b.lookup.source,
+                    } if b.lookup is not None else None,
                 }
                 for b in self.barcodes
             ],
