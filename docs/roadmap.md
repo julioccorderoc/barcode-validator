@@ -14,7 +14,7 @@
 
 ### EPIC-001: Core Decoding Pipeline
 
-- Status: Active
+- Status: Complete
 - Dependencies: None
 - **Goal:** Accept label proofs (PDF, AI, PSD, PNG, JPG, TIFF, BMP), decode all barcodes, output raw values + symbology metadata. Foundation for everything else.
 - **Scope:** File format routing (ADR-006), PDF/AI render via PyMuPDF at 2x (ADR-002), PSD/raster via Pillow, zxing-cpp primary + pyzbar fallback (ADR-001), OpenCV preprocessing retry (ADR-003). Output = list of raw decoded barcode objects. No classification, validation, or CLI.
