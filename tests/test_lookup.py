@@ -1,7 +1,20 @@
 """Tests for the lookup module — providers and service."""
 
-from barcode_validator.lookup import LookupProvider, LookupService
+import json
+from unittest.mock import patch, MagicMock
+
+from barcode_validator.lookup import LookupProvider, LookupService, OpenFoodFactsProvider
 from barcode_validator.models import BarcodeType, LookupResult
+
+
+def _mock_urlopen(response_data: dict, status: int = 200):
+    """Create a mock for urllib.request.urlopen."""
+    mock_response = MagicMock()
+    mock_response.status = status
+    mock_response.read.return_value = json.dumps(response_data).encode("utf-8")
+    mock_response.__enter__ = lambda s: s
+    mock_response.__exit__ = MagicMock(return_value=False)
+    return mock_response
 
 
 class FakeProvider(LookupProvider):
@@ -70,3 +83,50 @@ def test_service_returns_none_for_empty_providers():
     service = LookupService([])
     result = service.lookup("012345678901", BarcodeType.UPC_A)
     assert result is None
+
+
+class TestOpenFoodFactsProvider:
+    def test_supported_types(self):
+        provider = OpenFoodFactsProvider()
+        assert BarcodeType.UPC_A in provider.supported_types
+        assert BarcodeType.EAN_13 in provider.supported_types
+        assert BarcodeType.EAN_8 in provider.supported_types
+        assert BarcodeType.FNSKU not in provider.supported_types
+        assert BarcodeType.ASIN not in provider.supported_types
+
+    def test_name(self):
+        provider = OpenFoodFactsProvider()
+        assert provider.name == "open_food_facts"
+
+    @patch("barcode_validator.lookup.urlopen")
+    def test_lookup_found(self, mock_urlopen_fn):
+        mock_urlopen_fn.return_value = _mock_urlopen({
+            "status": 1,
+            "product": {
+                "product_name": "Organic Coconut Oil",
+                "brands": "Nature's Best",
+                "categories": "Oils, Coconut oils",
+            },
+        })
+        provider = OpenFoodFactsProvider()
+        result = provider.lookup("0850031591271")
+        assert result is not None
+        assert result.found is True
+        assert result.product_name == "Organic Coconut Oil"
+        assert result.brand == "Nature's Best"
+        assert result.category == "Oils, Coconut oils"
+        assert result.source == "open_food_facts"
+
+    @patch("barcode_validator.lookup.urlopen")
+    def test_lookup_not_found(self, mock_urlopen_fn):
+        mock_urlopen_fn.return_value = _mock_urlopen({"status": 0})
+        provider = OpenFoodFactsProvider()
+        result = provider.lookup("0000000000000")
+        assert result is None
+
+    @patch("barcode_validator.lookup.urlopen")
+    def test_lookup_network_error(self, mock_urlopen_fn):
+        mock_urlopen_fn.side_effect = OSError("Network unreachable")
+        provider = OpenFoodFactsProvider()
+        result = provider.lookup("0850031591271")
+        assert result is None

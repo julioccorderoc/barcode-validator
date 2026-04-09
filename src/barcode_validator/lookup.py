@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from abc import ABC, abstractmethod
+from urllib.request import urlopen, Request
 
 from barcode_validator.models import BarcodeType, LookupResult
 
@@ -43,3 +45,38 @@ class LookupService:
             if result is not None:
                 return result
         return None
+
+
+class OpenFoodFactsProvider(LookupProvider):
+    """Lookup via Open Food Facts API (free, no auth)."""
+
+    API_URL = "https://world.openfoodfacts.net/api/v2/product/{barcode}"
+
+    @property
+    def name(self) -> str:
+        return "open_food_facts"
+
+    @property
+    def supported_types(self) -> set[BarcodeType]:
+        return {BarcodeType.UPC_A, BarcodeType.EAN_13, BarcodeType.EAN_8}
+
+    def lookup(self, value: str) -> LookupResult | None:
+        url = self.API_URL.format(barcode=value)
+        request = Request(url, headers={"User-Agent": "barcode-validator/0.1.0"})
+        try:
+            with urlopen(request, timeout=10) as response:
+                data = json.loads(response.read())
+        except (OSError, json.JSONDecodeError):
+            return None
+
+        if data.get("status") != 1:
+            return None
+
+        product = data.get("product", {})
+        return LookupResult(
+            found=True,
+            product_name=product.get("product_name") or None,
+            brand=product.get("brands") or None,
+            category=product.get("categories") or None,
+            source=self.name,
+        )
