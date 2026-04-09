@@ -3,6 +3,8 @@
 import json
 from unittest.mock import patch, MagicMock
 
+import pytest
+
 from barcode_validator.lookup import LookupProvider, LookupService, OpenFoodFactsProvider, UPCitemdbProvider, create_lookup_service
 from barcode_validator.models import BarcodeType, LookupResult
 
@@ -191,3 +193,32 @@ def test_create_lookup_service_returns_service_with_default_providers():
     assert len(service._providers) == 2
     assert service._providers[0].name == "open_food_facts"
     assert service._providers[1].name == "upcitemdb"
+
+
+@pytest.mark.network
+class TestOpenFoodFactsIntegration:
+    """Integration tests hitting the real Open Food Facts API."""
+
+    def test_real_lookup_known_ean(self):
+        provider = OpenFoodFactsProvider()
+        result = provider.lookup("0850031591271")
+        if result is not None:
+            assert result.found is True
+            assert result.source == "open_food_facts"
+
+    def test_real_lookup_unknown_barcode(self):
+        provider = OpenFoodFactsProvider()
+        result = provider.lookup("0000000000000")
+        assert result is None
+
+
+@pytest.mark.network
+class TestUPCitemdbIntegration:
+    """Integration tests hitting the real UPCitemdb API."""
+
+    def test_real_lookup_known_ean(self):
+        provider = UPCitemdbProvider()
+        result = provider.lookup("0850031591271")
+        if result is not None:
+            assert result.found is True
+            assert result.source == "upcitemdb"

@@ -32,3 +32,6 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["tests"]
+markers = [
+    "network: tests that require internet access (deselect with '-m not network')",
+]
