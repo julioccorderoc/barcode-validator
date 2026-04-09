@@ -40,7 +40,7 @@
 
 ### EPIC-003: CLI & Python API
 
-- Status: Planned
+- Status: Complete
 - Dependencies: EPIC-002
 - **Goal:** CLI for ops team + AI agents, Python API for programmatic use. End-to-end usability.
 - **Scope:** argparse CLI with file path, `--expected`, `--json` (ADR-005). `validate_label()` entry point. Exit codes: 0=pass, 1=fail, 2=error. JSON stdout, human stderr. Batch support. Package entrypoint in `pyproject.toml`. Project root = skill directory. No GUI.

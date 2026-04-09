@@ -18,6 +18,9 @@ dependencies = [
     "zxing-cpp>=3.0.0",
 ]
 
+[project.scripts]
+barcode-validator = "barcode_validator.cli:main"
+
 [project.optional-dependencies]
 pyzbar = ["pyzbar"]
 
