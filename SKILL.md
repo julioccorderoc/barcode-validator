@@ -1,6 +1,6 @@
 ---
 name: barcode-validator
-description: Validate barcodes on label proofs (PDF, AI, PSD, PNG, JPG, TIFF, BMP). Extracts barcodes, classifies type (FNSKU, UPC-A, EAN-13, etc.), validates format and check digits, optionally compares against expected values. Returns structured JSON. Fully offline.
+description: Validate barcodes on label proofs (PDF, AI, PSD, PNG, JPG, TIFF, BMP). Extracts barcodes, classifies type (FNSKU, UPC-A, EAN-13, etc.), validates format and check digits, optionally compares against expected values. Returns structured JSON. Core engine is fully offline; optional product lookup uses free public APIs (disable with --no-lookup).
 ---
 
 # barcode-validator
@@ -43,6 +43,14 @@ barcode-validator <file> --output results.json
 ```
 
 `--output` implies `--json`. Writes a JSON array of results to the specified path.
+
+### Disable lookup (offline mode)
+
+```bash
+barcode-validator <file> --json --no-lookup
+```
+
+Product lookup is **on by default** and queries Open Food Facts (primary) and UPCitemdb (fallback) to enrich results. Use `--no-lookup` to disable all network calls for fully offline operation. Lookup is informational only — it does not affect the `passed` verdict.
 
 ## Examples
 
@@ -115,6 +123,7 @@ barcode-validator "label-proof.pdf" --expected X001ABC1234 --json
 | `barcodes[].valid_format`      | boolean           | Format matches expected pattern for classified type                          |
 | `barcodes[].valid_checkdigit`  | boolean or null   | Check digit valid (null if type has no check digit)                          |
 | `barcodes[].matches_expected`  | boolean or null   | Matches an expected value (null in decode-only mode)                         |
+| `barcodes[].lookup`            | object or null    | Product lookup result. `null` when `--no-lookup`. Does not affect `passed`.  |
 | `expected_not_found`           | array of strings  | Expected values not found in any barcode (empty in decode mode)              |
 | `summary`                      | string            | Human-readable one-liner                                                     |
 

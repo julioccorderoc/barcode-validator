@@ -8,7 +8,7 @@ NCL validates label proofs manually with phone barcode scanner app. Slow, error-
 
 Python tool + AI agent skill. Automates barcode validation on label proofs. Input: PDF/image + optional expected values. Output: extracted barcodes, classification, pass/fail.
 
-**Fully offline. No external APIs.**
+**Core decoding and validation engine is fully offline. The optional lookup extension makes network calls to free public APIs (Open Food Facts, UPCitemdb) to retrieve product information. Use `--no-lookup` to disable.**
 
 ## Users
 
@@ -95,7 +95,7 @@ Output: barcodes found (value, type, symbology, page) + validation per barcode +
 
 ## Non-Functional Requirements
 
-- **Self-contained:** No external APIs. Offline only. Minimal system deps.
+- **Self-contained:** Core pipeline is offline. Optional lookup uses free public APIs (no auth). Minimal system deps.
 - **Performance:** < 1 second per proof. Batch support.
 - **Accuracy:** 95%+ detection on clean proofs. Zero false positive on check digits.
 - **Portability:** macOS, Linux, Windows. Python 3.13+.
@@ -105,7 +105,6 @@ Output: barcodes found (value, type, symbology, page) + validation per barcode +
 - Barcode generation
 - OCR of non-barcode text
 - Web UI / GUI
-- Product data lookup
 - Amazon scraping
 - Camera/scanner input
 - Layout/design validation
@@ -127,7 +126,13 @@ JSON per file. Contract for AI agent integration.
       "page": 1,
       "valid_format": true,
       "valid_checkdigit": null,
-      "matches_expected": true
+      "matches_expected": true,
+      "lookup": {
+        "found": true,
+        "product_name": "Example Product",
+        "brand": "Example Brand",
+        "source": "open_food_facts"
+      }
     }
   ],
   "expected_not_found": [],
@@ -150,6 +155,7 @@ JSON per file. Contract for AI agent integration.
 | `barcodes[].valid_format` | bool | Matches regex for its type |
 | `barcodes[].valid_checkdigit` | bool/null | Check digit result. `null` for types without (FNSKU, ASIN). |
 | `barcodes[].matches_expected` | bool/null | Matches expected value. `null` in decode-only. |
+| `barcodes[].lookup` | object/null | Product lookup result. `null` when lookup disabled (`--no-lookup`). Object has `found`, `product_name`, `brand`, `source`. Does not affect `passed`. |
 | `expected_not_found` | string[] | Expected values not found. Empty in decode-only. |
 | `summary` | string | One-line human summary |
 
