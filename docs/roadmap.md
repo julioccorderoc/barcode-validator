@@ -65,7 +65,7 @@
 
 ### EPIC-005: AI Agent Skill Definition (`SKILL.md`)
 
-- Status: Planned
+- Status: Complete
 - Dependencies: EPIC-003
 - **Goal:** Make validator invocable as AI agent skill. Agents call it from conversation context.
 - **Scope:** `SKILL.md` at project root with metadata (name, description, triggers, examples). Wraps CLI from EPIC-003. Clear input/output contracts. No new Python code — declarative only.
