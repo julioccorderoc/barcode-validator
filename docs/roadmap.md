@@ -74,3 +74,17 @@
   - Trigger conditions clear (validate barcode, check label proof)
   - Usage examples for decode-only + comparison modes
   - Agent can read `SKILL.md` and invoke correctly against `test_docs/`
+
+### EPIC-006: Public Barcode Lookup Extension
+
+- Status: Active
+- Dependencies: EPIC-005
+- **Goal:** Look up decoded barcodes in free public databases (Open Food Facts, UPCitemdb) to retrieve product info. Pluggable provider architecture with extension point for future Amazon ASIN/FNSKU lookup.
+- **Scope:** `LookupProvider` ABC + `LookupService` orchestrator in `src/barcode_validator/lookup.py`. `OpenFoodFactsProvider` and `UPCitemdbProvider` built-in. Integrate into pipeline after validation, before JSON output. `--no-lookup` CLI flag. Extend output schema with `lookup` field per barcode. Unit tests (mocked HTTP) + opt-in network integration tests (`@pytest.mark.network`). Update PRD, SKILL.md, CLAUDE.md.
+- **Done when:**
+  - UPC-A barcode from `test_docs/` → lookup returns product info in JSON output
+  - `--no-lookup` → no network calls, `lookup: null` in output
+  - Network failure → graceful degradation, stderr warning, exit code unaffected
+  - Provider returns no match → `{"found": false, ...}` in lookup field
+  - `pytest` all green (existing + new tests)
+  - PRD and SKILL.md updated to reflect lookup feature
