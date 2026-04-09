@@ -3,7 +3,7 @@
 import json
 from unittest.mock import patch, MagicMock
 
-from barcode_validator.lookup import LookupProvider, LookupService, OpenFoodFactsProvider
+from barcode_validator.lookup import LookupProvider, LookupService, OpenFoodFactsProvider, UPCitemdbProvider
 from barcode_validator.models import BarcodeType, LookupResult
 
 
@@ -128,5 +128,58 @@ class TestOpenFoodFactsProvider:
     def test_lookup_network_error(self, mock_urlopen_fn):
         mock_urlopen_fn.side_effect = OSError("Network unreachable")
         provider = OpenFoodFactsProvider()
+        result = provider.lookup("0850031591271")
+        assert result is None
+
+
+class TestUPCitemdbProvider:
+    def test_supported_types(self):
+        provider = UPCitemdbProvider()
+        assert BarcodeType.UPC_A in provider.supported_types
+        assert BarcodeType.EAN_13 in provider.supported_types
+        assert BarcodeType.EAN_8 in provider.supported_types
+        assert BarcodeType.UPC_E in provider.supported_types
+        assert BarcodeType.ISBN_13 in provider.supported_types
+        assert BarcodeType.FNSKU not in provider.supported_types
+
+    def test_name(self):
+        provider = UPCitemdbProvider()
+        assert provider.name == "upcitemdb"
+
+    @patch("barcode_validator.lookup.urlopen")
+    def test_lookup_found(self, mock_urlopen_fn):
+        mock_urlopen_fn.return_value = _mock_urlopen({
+            "code": "OK",
+            "total": 1,
+            "items": [{
+                "title": "Coconut Oil Organic",
+                "brand": "Nature's Best",
+                "category": "Health & Beauty",
+            }],
+        })
+        provider = UPCitemdbProvider()
+        result = provider.lookup("0850031591271")
+        assert result is not None
+        assert result.found is True
+        assert result.product_name == "Coconut Oil Organic"
+        assert result.brand == "Nature's Best"
+        assert result.category == "Health & Beauty"
+        assert result.source == "upcitemdb"
+
+    @patch("barcode_validator.lookup.urlopen")
+    def test_lookup_not_found(self, mock_urlopen_fn):
+        mock_urlopen_fn.return_value = _mock_urlopen({
+            "code": "OK",
+            "total": 0,
+            "items": [],
+        })
+        provider = UPCitemdbProvider()
+        result = provider.lookup("0000000000000")
+        assert result is None
+
+    @patch("barcode_validator.lookup.urlopen")
+    def test_lookup_network_error(self, mock_urlopen_fn):
+        mock_urlopen_fn.side_effect = OSError("Connection refused")
+        provider = UPCitemdbProvider()
         result = provider.lookup("0850031591271")
         assert result is None

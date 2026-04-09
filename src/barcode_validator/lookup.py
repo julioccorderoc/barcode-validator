@@ -80,3 +80,45 @@ class OpenFoodFactsProvider(LookupProvider):
             category=product.get("categories") or None,
             source=self.name,
         )
+
+
+class UPCitemdbProvider(LookupProvider):
+    """Lookup via UPCitemdb API (free tier, 100 req/day, no auth)."""
+
+    API_URL = "https://api.upcitemdb.com/prod/trial/lookup?upc={barcode}"
+
+    @property
+    def name(self) -> str:
+        return "upcitemdb"
+
+    @property
+    def supported_types(self) -> set[BarcodeType]:
+        return {
+            BarcodeType.UPC_A,
+            BarcodeType.EAN_13,
+            BarcodeType.EAN_8,
+            BarcodeType.UPC_E,
+            BarcodeType.ISBN_13,
+        }
+
+    def lookup(self, value: str) -> LookupResult | None:
+        url = self.API_URL.format(barcode=value)
+        request = Request(url, headers={"User-Agent": "barcode-validator/0.1.0"})
+        try:
+            with urlopen(request, timeout=10) as response:
+                data = json.loads(response.read())
+        except (OSError, json.JSONDecodeError):
+            return None
+
+        items = data.get("items", [])
+        if not items:
+            return None
+
+        item = items[0]
+        return LookupResult(
+            found=True,
+            product_name=item.get("title") or None,
+            brand=item.get("brand") or None,
+            category=item.get("category") or None,
+            source=self.name,
+        )
