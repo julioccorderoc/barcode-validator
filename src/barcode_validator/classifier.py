@@ -36,11 +36,11 @@ def classify(barcode: DecodedBarcode) -> BarcodeType:
         return BarcodeType.ASIN
 
     # 7. Code128 by symbology
-    if 'Code128' in symbology or 'CODE128' in symbology:
+    if 'code128' in symbology.lower():
         return BarcodeType.CODE128
 
     # 8. Code39 by symbology
-    if 'Code39' in symbology or 'CODE39' in symbology:
+    if 'code39' in symbology.lower():
         return BarcodeType.CODE39
 
     # 9. Unknown

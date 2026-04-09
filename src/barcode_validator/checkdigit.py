@@ -16,12 +16,12 @@ def _mod10_check(digits: str) -> bool:
     return total % 10 == 0
 
 
-_DISPATCH: dict[BarcodeType, bool | None] = {
-    BarcodeType.UPC_A: True,
-    BarcodeType.EAN_13: True,
-    BarcodeType.EAN_8: True,
-    BarcodeType.ISBN_13: True,
-    BarcodeType.UPC_E: True,
+_CHECKDIGIT_TYPES: set[BarcodeType] = {
+    BarcodeType.UPC_A,
+    BarcodeType.EAN_13,
+    BarcodeType.EAN_8,
+    BarcodeType.ISBN_13,
+    BarcodeType.UPC_E,
 }
 
 
@@ -30,6 +30,6 @@ def validate_checkdigit(value: str, barcode_type: BarcodeType) -> bool | None:
 
     Returns True if valid, False if invalid, None if type has no check digit.
     """
-    if barcode_type not in _DISPATCH:
+    if barcode_type not in _CHECKDIGIT_TYPES:
         return None
     return _mod10_check(value)

@@ -1,7 +1,4 @@
 """Tests for check digit validation."""
-
-import pytest
-
 from barcode_validator.checkdigit import validate_checkdigit, _mod10_check
 from barcode_validator.models import BarcodeType
 

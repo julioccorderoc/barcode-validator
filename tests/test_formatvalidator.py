@@ -1,6 +1,4 @@
 """Tests for format validation of barcode values."""
-import pytest
-
 from barcode_validator.formatvalidator import validate_format
 from barcode_validator.models import BarcodeType
 

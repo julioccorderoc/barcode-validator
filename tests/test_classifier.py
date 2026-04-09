@@ -1,6 +1,4 @@
 """Tests for barcode classifier — priority-ordered pattern matching (ADR-004)."""
-import pytest
-
 from barcode_validator.classifier import classify
 from barcode_validator.models import BarcodeType, DecodedBarcode
 
