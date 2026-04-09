@@ -101,3 +101,24 @@ class TestParseArgsSpecialPaths:
     def test_path_with_spaces(self):
         args = parse_args(["my label proof.pdf"])
         assert args.files == ["my label proof.pdf"]
+
+
+class TestParseArgsOutput:
+    """Test the --output / -o argument."""
+
+    def test_output_long_form(self):
+        args = parse_args(["label.pdf", "--output", "results.json"])
+        assert args.output == "results.json"
+
+    def test_output_short_form(self):
+        args = parse_args(["label.pdf", "-o", "results.json"])
+        assert args.output == "results.json"
+
+    def test_output_defaults_to_none(self):
+        args = parse_args(["label.pdf"])
+        assert args.output is None
+
+    def test_output_with_json_flag(self):
+        args = parse_args(["label.pdf", "--output", "results.json", "--json"])
+        assert args.output == "results.json"
+        assert args.json is True

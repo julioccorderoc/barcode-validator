@@ -1,5 +1,7 @@
 """CLI output formatting for ValidationResult."""
 
+import json
+
 from barcode_validator.models import ValidationResult
 
 
@@ -32,6 +34,11 @@ def format_human(result: ValidationResult) -> str:
 def format_json(result: ValidationResult) -> str:
     """Format a ValidationResult as JSON for stdout. Delegates to result.to_json()."""
     return result.to_json()
+
+
+def format_json_array(results: list[ValidationResult]) -> str:
+    """Format a list of ValidationResults as a JSON array."""
+    return json.dumps([r.to_dict() for r in results], indent=2)
 
 
 def format_error(file_path: str, error: Exception) -> str:

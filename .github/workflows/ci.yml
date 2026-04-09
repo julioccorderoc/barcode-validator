@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        run: uv python install
+      - name: Install dependencies
+        run: uv sync
+      - name: Run tests
+        run: uv run pytest --ignore=tests/test_cli_integration.py -v
+
+  validate-skill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate SKILL.md frontmatter
+        run: |
+          test -f SKILL.md || { echo "SKILL.md not found"; exit 1; }
+          head -20 SKILL.md | grep -q "^name:" || { echo "Missing 'name' in frontmatter"; exit 1; }
+          head -20 SKILL.md | grep -q "^description:" || { echo "Missing 'description' in frontmatter"; exit 1; }
+          echo "SKILL.md frontmatter valid"

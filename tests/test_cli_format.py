@@ -195,3 +195,40 @@ class TestFormatError:
         output = format_error("test.pdf", err)
         assert "bad input" in output
         assert "test.pdf" in output
+
+
+class TestFormatJsonArray:
+    """format_json_array output."""
+
+    def test_returns_valid_json_array(self):
+        from barcode_validator.cli_format import format_json_array
+
+        results = [_make_result(file="a.pdf"), _make_result(file="b.pdf")]
+        output = format_json_array(results)
+        parsed = json.loads(output)
+        assert isinstance(parsed, list)
+        assert len(parsed) == 2
+
+    def test_single_result_is_array(self):
+        from barcode_validator.cli_format import format_json_array
+
+        results = [_make_result(file="a.pdf")]
+        output = format_json_array(results)
+        parsed = json.loads(output)
+        assert isinstance(parsed, list)
+        assert len(parsed) == 1
+
+    def test_empty_list_returns_empty_array(self):
+        from barcode_validator.cli_format import format_json_array
+
+        output = format_json_array([])
+        assert json.loads(output) == []
+
+    def test_result_fields_present(self):
+        from barcode_validator.cli_format import format_json_array
+
+        results = [_make_result(file="test.pdf", passed=True, mode="decode")]
+        parsed = json.loads(format_json_array(results))
+        assert parsed[0]["file"] == "test.pdf"
+        assert parsed[0]["passed"] is True
+        assert parsed[0]["mode"] == "decode"

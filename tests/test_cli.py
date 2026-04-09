@@ -12,8 +12,8 @@ from barcode_validator.models import ValidationResult
 
 # --- Helpers ---
 
-def _make_ns(files: list[str], expected: list[str] | None = None, json: bool = False) -> argparse.Namespace:
-    return argparse.Namespace(files=files, expected=expected, json=json)
+def _make_ns(files: list[str], expected: list[str] | None = None, json: bool = False, output: str | None = None) -> argparse.Namespace:
+    return argparse.Namespace(files=files, expected=expected, json=json, output=output)
 
 
 def _make_result(file: str, passed: bool) -> ValidationResult:
@@ -199,3 +199,100 @@ class TestBatchBehavior:
         # good.pdf should still produce output despite bad.pdf erroring
         assert '{"file": "good.pdf"}' in captured.out
         assert "Error: bad.pdf" in captured.err
+
+
+# --- Output file tests ---
+
+
+class TestOutputFlag:
+    def test_output_implies_json(self, monkeypatch, capsys, tmp_path):
+        from barcode_validator.cli import main
+
+        out_file = tmp_path / "results.json"
+        ns = _make_ns(files=["test.pdf"], output=str(out_file))
+        _patch_cli(monkeypatch, ns, results={"test.pdf": _make_result("test.pdf", True)})
+        main()
+        captured = capsys.readouterr()
+        # Nothing to stdout — file is the output
+        assert captured.out == ""
+        # File was written
+        assert out_file.exists()
+
+    def test_single_file_writes_json_array(self, monkeypatch, tmp_path):
+        import json as json_mod
+        from barcode_validator.cli import main
+
+        out_file = tmp_path / "results.json"
+        ns = _make_ns(files=["test.pdf"], output=str(out_file))
+        result = _make_result("test.pdf", True)
+        _patch_cli(monkeypatch, ns, results={"test.pdf": result})
+        # Restore real format_json_array so file gets real content
+        from barcode_validator.cli_format import format_json_array
+        monkeypatch.setattr("barcode_validator.cli.format_json_array", format_json_array)
+        main()
+        parsed = json_mod.loads(out_file.read_text())
+        assert isinstance(parsed, list)
+        assert len(parsed) == 1
+        assert parsed[0]["file"] == "test.pdf"
+
+    def test_multiple_files_writes_json_array(self, monkeypatch, tmp_path):
+        import json as json_mod
+        from barcode_validator.cli import main
+
+        out_file = tmp_path / "results.json"
+        ns = _make_ns(files=["a.pdf", "b.pdf"], output=str(out_file))
+        _patch_cli(monkeypatch, ns, results={
+            "a.pdf": _make_result("a.pdf", True),
+            "b.pdf": _make_result("b.pdf", True),
+        })
+        from barcode_validator.cli_format import format_json_array
+        monkeypatch.setattr("barcode_validator.cli.format_json_array", format_json_array)
+        main()
+        parsed = json_mod.loads(out_file.read_text())
+        assert isinstance(parsed, list)
+        assert len(parsed) == 2
+
+    def test_error_excluded_from_output(self, monkeypatch, capsys, tmp_path):
+        import json as json_mod
+        from barcode_validator.cli import main
+
+        out_file = tmp_path / "results.json"
+        ns = _make_ns(files=["bad.pdf", "good.pdf"], output=str(out_file))
+        _patch_cli(monkeypatch, ns, results={
+            "good.pdf": _make_result("good.pdf", True),
+        }, exc_map={
+            "bad.pdf": FileNotFoundError("not found"),
+        })
+        from barcode_validator.cli_format import format_json_array
+        monkeypatch.setattr("barcode_validator.cli.format_json_array", format_json_array)
+        main()
+        captured = capsys.readouterr()
+        assert "Error: bad.pdf" in captured.err
+        parsed = json_mod.loads(out_file.read_text())
+        assert len(parsed) == 1
+        assert parsed[0]["file"] == "good.pdf"
+
+    def test_missing_parent_dir_returns_2(self, monkeypatch, capsys):
+        from barcode_validator.cli import main
+
+        ns = _make_ns(files=["test.pdf"], output="/nonexistent/dir/results.json")
+        _patch_cli(monkeypatch, ns, results={"test.pdf": _make_result("test.pdf", True)})
+        code = main()
+        assert code == 2
+        captured = capsys.readouterr()
+        assert "Error" in captured.err
+
+    def test_all_errors_writes_empty_array(self, monkeypatch, tmp_path):
+        import json as json_mod
+        from barcode_validator.cli import main
+
+        out_file = tmp_path / "results.json"
+        ns = _make_ns(files=["bad.pdf"], output=str(out_file))
+        _patch_cli(monkeypatch, ns, exc_map={
+            "bad.pdf": FileNotFoundError("not found"),
+        })
+        from barcode_validator.cli_format import format_json_array
+        monkeypatch.setattr("barcode_validator.cli.format_json_array", format_json_array)
+        main()
+        parsed = json_mod.loads(out_file.read_text())
+        assert parsed == []

@@ -28,10 +28,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="output JSON to stdout",
     )
+    parser.add_argument(
+        "--output", "-o",
+        default=None,
+        help="write JSON results to file (implies --json)",
+    )
     return parser
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse CLI arguments. Returns namespace with: files, expected, json."""
+    """Parse CLI arguments. Returns namespace with: files, expected, json, output."""
     parser = build_parser()
     return parser.parse_args(argv)

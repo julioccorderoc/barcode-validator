@@ -5,7 +5,7 @@ description: Validate barcodes on label proofs (PDF, AI, PSD, PNG, JPG, TIFF, BM
 
 # barcode-validator
 
-Validate barcodes on label proofs for Amazon FBA. Decodes barcodes from files, classifies them by type, validates format and check digits, and optionally compares against expected values.
+Validate barcodes on label (from designer and proofs from printers). Decodes barcodes from files, classifies them by type, validates format and check digits, and optionally compares against expected values
 
 ## When to Use
 
@@ -22,7 +22,7 @@ Validate barcodes on label proofs for Amazon FBA. Decodes barcodes from files, c
 
 ## Usage
 
-Always use `--json` for structured output. Alternatively, use `./scripts/validate.sh` which adds `--json` automatically.
+Always use `--json` for structured output, or `--output <path>` to save results to a file. Alternatively, use `./scripts/validate.sh` which adds `--json` automatically.
 
 ### Decode-only (no expected values)
 
@@ -35,6 +35,14 @@ barcode-validator <file> --json
 ```bash
 barcode-validator <file> --expected <value1> --expected <value2> --json
 ```
+
+### Save results to file
+
+```bash
+barcode-validator <file> --output results.json
+```
+
+`--output` implies `--json`. Writes a JSON array of results to the specified path.
 
 ## Examples
 
