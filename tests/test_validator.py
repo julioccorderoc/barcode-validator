@@ -3,7 +3,8 @@ import json
 
 import pytest
 
-from barcode_validator.models import BarcodeType, DecodedBarcode
+from barcode_validator.lookup import LookupService, LookupProvider
+from barcode_validator.models import BarcodeType, DecodedBarcode, LookupResult
 from barcode_validator.validator import validate_barcodes
 
 
@@ -122,3 +123,41 @@ class TestValidateBarcodesEdge:
         ]
         result = validate_barcodes(decoded, "test.pdf")
         assert "2" in result.summary
+
+
+class FakeLookupProvider(LookupProvider):
+    @property
+    def name(self) -> str:
+        return "fake"
+
+    @property
+    def supported_types(self) -> set[BarcodeType]:
+        return {BarcodeType.UPC_A, BarcodeType.EAN_13}
+
+    def lookup(self, value: str) -> LookupResult | None:
+        return LookupResult(
+            found=True,
+            product_name="Test Product",
+            brand="Test Brand",
+            category="Food",
+            source="fake",
+        )
+
+
+def test_validate_barcodes_with_lookup():
+    decoded = [
+        DecodedBarcode(value="0850031591271", symbology="EAN13", page=1),
+    ]
+    service = LookupService([FakeLookupProvider()])
+    result = validate_barcodes(decoded, "test.pdf", lookup_service=service)
+    assert result.barcodes[0].lookup is not None
+    assert result.barcodes[0].lookup.found is True
+    assert result.barcodes[0].lookup.product_name == "Test Product"
+
+
+def test_validate_barcodes_without_lookup():
+    decoded = [
+        DecodedBarcode(value="0850031591271", symbology="EAN13", page=1),
+    ]
+    result = validate_barcodes(decoded, "test.pdf")
+    assert result.barcodes[0].lookup is None

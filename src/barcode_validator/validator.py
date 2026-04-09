@@ -1,16 +1,24 @@
 """Orchestrator — classify, validate, and compare decoded barcodes."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from barcode_validator.checkdigit import validate_checkdigit
 from barcode_validator.classifier import classify
 from barcode_validator.comparator import match_expected
 from barcode_validator.formatvalidator import validate_format
 from barcode_validator.models import BarcodeResult, DecodedBarcode, ValidationResult
 
+if TYPE_CHECKING:
+    from barcode_validator.lookup import LookupService
+
 
 def validate_barcodes(
     decoded: list[DecodedBarcode],
     file_path: str,
     expected_barcodes: list[str] | None = None,
+    lookup_service: LookupService | None = None,
 ) -> ValidationResult:
     """Classify, validate, and optionally compare decoded barcodes.
 
@@ -18,6 +26,7 @@ def validate_barcodes(
         decoded: Raw decoded barcodes from the decoder.
         file_path: Original file path (for the output).
         expected_barcodes: Expected values for comparison mode. None = decode-only.
+        lookup_service: Optional lookup service for public DB queries.
     """
     mode = "comparison" if expected_barcodes is not None else "decode"
 
@@ -38,6 +47,9 @@ def validate_barcodes(
             if expected_barcodes is not None
             else None
         )
+        lookup_result = None
+        if lookup_service is not None:
+            lookup_result = lookup_service.lookup(barcode.value, barcode_type)
         results.append(
             BarcodeResult(
                 value=barcode.value,
@@ -47,6 +59,7 @@ def validate_barcodes(
                 valid_format=valid_format,
                 valid_checkdigit=valid_checkdigit,
                 matches_expected=matches_expected,
+                lookup=lookup_result,
             )
         )
 
