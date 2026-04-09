@@ -17,7 +17,7 @@ Validate barcodes on label proofs for Amazon FBA. Decodes barcodes from files, c
 ## Prerequisites
 
 - Python 3.13+
-- Install: `uv pip install barcode-validator`
+- Install: `uv add barcode-validator`
 - Verify: `barcode-validator --help`
 
 ## Usage
@@ -101,7 +101,7 @@ barcode-validator "label-proof.pdf" --expected X001ABC1234 --json
 | `mode`                         | string            | `"decode"` or `"comparison"`                                                 |
 | `barcodes`                     | array             | Extracted barcode results                                                    |
 | `barcodes[].value`             | string            | Decoded barcode value                                                        |
-| `barcodes[].type`              | string            | FNSKU, UPC_A, EAN_13, EAN_8, UPC_E, ISBN_13, ASIN, CODE128, CODE39, UNKNOWN |
+| `barcodes[].type`              | string            | See Barcode Types Recognized section                                         |
 | `barcodes[].symbology`         | string            | Raw symbology from decoder (e.g., Code128, EAN13)                            |
 | `barcodes[].page`              | integer           | Page number (1-indexed, 0 for single-page images)                            |
 | `barcodes[].valid_format`      | boolean           | Format matches expected pattern for classified type                          |
@@ -127,13 +127,13 @@ barcode-validator "label-proof.pdf" --expected X001ABC1234 --json
 
 ## Error Handling
 
-| Scenario                          | Exit Code | Output                                                      | Agent Action                          |
-|-----------------------------------|-----------|-------------------------------------------------------------|---------------------------------------|
-| Unsupported file format (e.g. .eps) | 2       | stderr: `Error: file.eps: Unsupported file format: .eps`    | Report unsupported format to user     |
-| File not found                    | 2         | stderr: `Error: missing.pdf: No such file or directory`     | Check file path                       |
-| No barcodes found (decode mode)   | 0         | JSON with empty `barcodes` array, `passed: true`            | Report no barcodes detected           |
-| No barcodes found (comparison)    | 1         | JSON with `passed: false`, `expected_not_found` populated   | Report expected barcodes not found    |
-| Processing failure                | 2         | stderr error message                                        | Report error to user                  |
+| Scenario                            | Exit Code | Output                                                    | Agent Action                       |
+|-------------------------------------|-----------|-----------------------------------------------------------|------------------------------------|
+| Unsupported file format (e.g. .eps) | 2         | stderr: `Error: file.eps: Unsupported file format: .eps`  | Report unsupported format to user  |
+| File not found                      | 2         | stderr: `Error: missing.pdf: No such file or directory`   | Check file path                    |
+| No barcodes found (decode mode)     | 0         | JSON with empty `barcodes` array, `passed: true`          | Report no barcodes detected        |
+| No barcodes found (comparison)      | 1         | JSON with `passed: false`, `expected_not_found` populated | Report expected barcodes not found |
+| Processing failure                  | 2         | stderr error message                                      | Report error to user               |
 
 **Always check exit code first.** Parse JSON only on exit 0 or 1. On exit 2, read stderr for error details.
 
@@ -147,12 +147,12 @@ EPS is **not supported**.
 
 | Type    | Pattern                            | Validation         |
 |---------|------------------------------------|--------------------|
-| FNSKU   | X00 + 7 alphanumeric (Code 128)   | Regex format       |
-| UPC-A   | 12 digits                          | MOD-10 check digit |
-| UPC-E   | 8 digits                           | Check digit        |
-| EAN-13  | 13 digits                          | MOD-10 check digit |
-| EAN-8   | 8 digits                           | Check digit        |
-| ISBN-13 | 13 digits, 978/979 prefix          | Check digit        |
+| FNSKU   | X00 + 7 alphanumeric (Code 128)    | Regex format       |
+| UPC_A   | 12 digits                          | MOD-10 check digit |
+| UPC_E   | 8 digits                           | Check digit        |
+| EAN_13  | 13 digits                          | MOD-10 check digit |
+| EAN_8   | 8 digits                           | Check digit        |
+| ISBN_13 | 13 digits, 978/979 prefix          | Check digit        |
 | ASIN    | 10 alphanumeric, B0 prefix         | Regex format       |
 | CODE128 | Variable alphanumeric              | Symbology check    |
 | CODE39  | Variable alphanumeric              | Symbology check    |
