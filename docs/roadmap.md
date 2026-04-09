@@ -77,7 +77,7 @@
 
 ### EPIC-006: Public Barcode Lookup Extension
 
-- Status: Active
+- Status: Complete
 - Dependencies: EPIC-005
 - **Goal:** Look up decoded barcodes in free public databases (Open Food Facts, UPCitemdb) to retrieve product info. Pluggable provider architecture with extension point for future Amazon ASIN/FNSKU lookup.
 - **Scope:** `LookupProvider` ABC + `LookupService` orchestrator in `src/barcode_validator/lookup.py`. `OpenFoodFactsProvider` and `UPCitemdbProvider` built-in. Integrate into pipeline after validation, before JSON output. `--no-lookup` CLI flag. Extend output schema with `lookup` field per barcode. Unit tests (mocked HTTP) + opt-in network integration tests (`@pytest.mark.network`). Update PRD, SKILL.md, CLAUDE.md.
