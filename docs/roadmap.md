@@ -27,7 +27,7 @@
 
 ### EPIC-002: Classification, Validation & Report Output
 
-- Status: Planned
+- Status: Complete
 - Dependencies: EPIC-001
 - **Goal:** Classify decoded barcodes by type (FNSKU, UPC-A, EAN-13, etc.), validate format + check digits, compare against expected values, produce JSON output per PRD schema.
 - **Scope:** Pattern matching classification (ADR-004), MOD-10 check digit for UPC/EAN/ISBN, regex format validation, decode-only vs comparison mode, JSON output schema. Consumes EPIC-001 output → produces `ValidationResult` with `to_json()`. No CLI.
