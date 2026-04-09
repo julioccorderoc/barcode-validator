@@ -17,7 +17,7 @@ Validate barcodes on label proofs for Amazon FBA. Decodes barcodes from files, c
 ## Prerequisites
 
 - Python 3.13+
-- Install: `uv add barcode-validator`
+- Install: `uv add barcode-validator` (if published) or `uv pip install -e .` (from source)
 - Verify: `barcode-validator --help`
 
 ## Usage
@@ -114,7 +114,7 @@ barcode-validator "label-proof.pdf" --expected X001ABC1234 --json
 
 - **Decode mode:** true if all barcodes have valid format AND no failed check digits
 - **Comparison mode:** true if all expected values found AND all matches confirmed
-- **No barcodes found (decode):** `passed: true` (vacuously valid)
+- **No barcodes found (decode):** `passed: false` (no barcodes to validate)
 - **No barcodes found (comparison):** `passed: false` (expected values not found)
 
 ## Exit Codes
@@ -130,8 +130,8 @@ barcode-validator "label-proof.pdf" --expected X001ABC1234 --json
 | Scenario                            | Exit Code | Output                                                    | Agent Action                       |
 |-------------------------------------|-----------|-----------------------------------------------------------|------------------------------------|
 | Unsupported file format (e.g. .eps) | 2         | stderr: `Error: file.eps: Unsupported file format: .eps`  | Report unsupported format to user  |
-| File not found                      | 2         | stderr: `Error: missing.pdf: No such file or directory`   | Check file path                    |
-| No barcodes found (decode mode)     | 0         | JSON with empty `barcodes` array, `passed: true`          | Report no barcodes detected        |
+| File not found                      | 2         | stderr: `Error: missing.pdf: File not found: missing.pdf` | Check file path                    |
+| No barcodes found (decode mode)     | 1         | JSON with empty `barcodes` array, `passed: false`         | Report no barcodes detected        |
 | No barcodes found (comparison)      | 1         | JSON with `passed: false`, `expected_not_found` populated | Report expected barcodes not found |
 | Processing failure                  | 2         | stderr error message                                      | Report error to user               |
 
@@ -156,3 +156,4 @@ EPS is **not supported**.
 | ASIN    | 10 alphanumeric, B0 prefix         | Regex format       |
 | CODE128 | Variable alphanumeric              | Symbology check    |
 | CODE39  | Variable alphanumeric              | Symbology check    |
+| UNKNOWN | No pattern matched                 | None               |
