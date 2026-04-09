@@ -73,12 +73,15 @@ def test_service_tries_fallback_on_miss():
     assert result.source == "fake"
 
 
-def test_service_returns_none_when_all_miss():
+def test_service_returns_not_found_when_all_miss():
     miss1 = FakeProvider("miss1", {BarcodeType.UPC_A}, None)
     miss2 = FakeProvider("miss2", {BarcodeType.UPC_A}, None)
     service = LookupService([miss1, miss2])
     result = service.lookup("012345678901", BarcodeType.UPC_A)
-    assert result is None
+    assert result is not None
+    assert result.found is False
+    assert result.product_name is None
+    assert result.source is None
 
 
 def test_service_returns_none_for_empty_providers():

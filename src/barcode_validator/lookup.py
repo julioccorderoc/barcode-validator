@@ -36,14 +36,26 @@ class LookupService:
     def lookup(self, value: str, barcode_type: BarcodeType) -> LookupResult | None:
         """Look up a barcode value using registered providers.
 
-        Tries providers in order. Returns the first hit, or None.
+        Tries providers in order. Returns the first hit, or
+        LookupResult(found=False) if all providers miss, or
+        None if no providers support this barcode type.
         """
+        tried = False
         for provider in self._providers:
             if barcode_type not in provider.supported_types:
                 continue
+            tried = True
             result = provider.lookup(value)
             if result is not None:
                 return result
+        if tried:
+            return LookupResult(
+                found=False,
+                product_name=None,
+                brand=None,
+                category=None,
+                source=None,
+            )
         return None
 
 
